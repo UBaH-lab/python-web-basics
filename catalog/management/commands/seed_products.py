@@ -7,6 +7,10 @@ class Command(BaseCommand):
     help = 'Создаёт тестовые продукты'
 
     def handle(self, *args, **options):
+        # Удаляем все продукты перед созданием новых
+        Product.objects.all().delete()
+        self.stdout.write('Удалены старые продукты')
+
         # Получаем все категории
         categories = Category.objects.all()
 
