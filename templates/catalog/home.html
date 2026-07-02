@@ -1,67 +1,75 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Главная</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <!-- Header -->
-    <header class="bg-primary text-white py-3">
-        <div class="container">
-            <nav class="navbar navbar-expand-lg navbar-dark">
-                <a class="navbar-brand" href="/">Мой Сайт</a>
-                <div class="collapse navbar-collapse">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link active" href="/">Главная</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/contacts">Контакты</a></li>
-                    </ul>
-                </div>
-            </nav>
-        </div>
-    </header>
+{% extends 'base.html' %}
 
-    <!-- Body -->
-    <main class="container my-5">
-        <h1>Добро пожаловать!</h1>
-        <p class="lead">Это простое веб-приложение на Python без фреймворков.</p>
+{% block title %}Каталог товаров{% endblock %}
 
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Быстро</h5>
-                        <p class="card-text">Минималистичный сервер работает мгновенно.</p>
-                    </div>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Каталог товаров</h1>
+    <a href="{% url 'catalog:product_create' %}" class="btn btn-success">Добавить товар</a>
+</div>
+
+<div class="row">
+    {% for product in page_obj %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+            {% else %}
+                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <span class="text-white">Нет изображения</span>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Просто</h5>
-                        <p class="card-text">Понятный код для изучения основ.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Эффективно</h5>
-                        <p class="card-text">Идеально для прототипов.</p>
-                    </div>
-                </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text">{{ product.description|truncatechars:100 }}</p>
+                <p class="card-text"><strong>{{ product.price }} ₽</strong></p>
+                <a href="{% url 'catalog:product_detail' product.pk %}" class="btn btn-primary">Подробнее</a>
             </div>
         </div>
-    </main>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <p class="text-muted">Товары не найдены.</p>
+    </div>
+    {% endfor %}
+</div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white text-center py-4 mt-auto">
-        <div class="container">
-            <p>&copy; 2025 Мой Сайт. Все права защищены.</p>
-        </div>
-    </footer>
+<!-- Пагинация -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Пагинация">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">Назад</span>
+        </li>
+        {% endif %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперёд</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">Вперёд</span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
