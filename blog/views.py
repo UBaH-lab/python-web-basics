@@ -1,6 +1,7 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+﻿from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.core.mail import mail_managers
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from blog.models import BlogEntry
 from blog.forms import BlogEntryForm
 
@@ -24,7 +25,7 @@ class BlogEntryDetailView(DetailView):
         obj = super().get_object(queryset)
         obj.views_count += 1
         obj.save()
-        
+
         if obj.views_count == 100:
             mail_managers(
                 subject='Поздравляем!',
@@ -33,23 +34,32 @@ class BlogEntryDetailView(DetailView):
         return obj
 
 
-class BlogEntryCreateView(CreateView):
+class BlogEntryCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = BlogEntry
     form_class = BlogEntryForm
     template_name = 'blog/blogentry_form.html'
     success_url = reverse_lazy('blog:blogentry_list')
 
+    def test_func(self):
+        return self.request.user.groups.filter(name='Контент-менеджер').exists()
 
-class BlogEntryUpdateView(UpdateView):
+
+class BlogEntryUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = BlogEntry
     form_class = BlogEntryForm
     template_name = 'blog/blogentry_form.html'
+
+    def test_func(self):
+        return self.request.user.groups.filter(name='Контент-менеджер').exists()
 
     def get_success_url(self):
         return reverse_lazy('blog:blogentry_detail', kwargs={'pk': self.object.pk})
 
 
-class BlogEntryDeleteView(DeleteView):
+class BlogEntryDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = BlogEntry
     template_name = 'blog/blogentry_confirm_delete.html'
     success_url = reverse_lazy('blog:blogentry_list')
+
+    def test_func(self):
+        return self.request.user.groups.filter(name='Контент-менеджер').exists()
