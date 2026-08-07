@@ -2,8 +2,11 @@
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import models
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from catalog.models import Product
 from catalog.forms import ProductForm
+from catalog.services import get_products_by_category
 
 
 class ProductListView(ListView):
@@ -21,6 +24,7 @@ class ProductListView(ListView):
         return queryset.filter(is_published=True)
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class ProductDetailView(DetailView):
     model = Product
     template_name = 'catalog/product_detail.html'
@@ -65,3 +69,16 @@ class ProductDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 class ContactsView(TemplateView):
     template_name = 'catalog/contacts.html'
+
+class ProductsByCategoryView(ListView):
+    """Отображает список продуктов в указанной категории.
+    Использует сервисную функцию get_products_by_category,
+    которая кеширует результат в Redis (ключ category_{id}, TTL 300 сек).
+    """
+    model = Product
+    template_name = 'catalog/products_by_category.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        category_id = self.kwargs.get('category_id')
+        return get_products_by_category(category_id)
