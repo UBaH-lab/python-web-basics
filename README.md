@@ -1,54 +1,54 @@
-# Django Catalog
+# Django Catalog — Интернет-магазин
 
-Учебный проект каталога товаров на Django.
+Веб-приложение интернет-магазина на Django с кешированием Redis,
+авторизацией пользователей и ролевой моделью доступа.
 
-## Модели
+## 🛠 Технологии
+- Python 3.13
+- Django 6.0
+- PostgreSQL
+- Redis (кеширование)
+- Bootstrap 5
+- SMTP (email-отправка)
 
-- **Category** — категории товаров
-- **Product** — товары
+## ⚡ Функционал
+- 📋 Каталог товаров с пагинацией (по 6 на страницу)
+- ✏️ CRUD-операции (создание, редактирование, удаление)
+- 🔐 Авторизация и регистрация пользователей
+- 👤 Ролевая модель доступа (владелец / модератор)
+- 🚀 Кеширование страниц и данных через Redis
+- ✅ Валидация форм
+- 🖼 Загрузка изображений товаров
+- 📧 Email-отправка через SMTP
 
-## Запуск проекта
+## 📐 Структура проекта
+config/ # Настройки Django (settings, urls, wsgi) catalog/ # Приложение каталога товаров blog/ # Приложение блога users/ # Приложение пользователей templates/ # Шаблоны (base, navbar, страницы) static/ # Статические файлы (CSS, JS, изображения) media/ # Загруженные изображения товаров
 
+
+## 🚀 Запуск
+```bash
+git clone https://github.com/UBaH-lab/Django.git
+cd Django
+
+# Виртуальное окружение
+python -m venv .venv
+.venv\Scripts\activate
+
+# Зависимости
 pip install -r requirements.txt
+
+# База данных
 python manage.py migrate
+
+# Тестовые данные
 python manage.py seed_products
+
+# Запуск
 python manage.py runserver
-
-## Страницы
-
-- `/` — Главная со списком товаров
-- `/products/<id>/` — Страница товара
-- `/products/create/` — Добавление товара
-- `/contacts/` — Контакты
-
-## Шаблоны
-
-Структура:
-
-templates/
-├── base.html              # Базовый шаблон
-├── navbar.html            # Меню
-└── catalog/
-    ├── home.html          # Список товаров
-    ├── product_detail.html # Страница товара
-    ├── product_form.html   # Форма добавления
-    └── contacts.html       # Контакты
-
-Функционал:
-
-- base.html — Bootstrap 5, блоки title и content
-- navbar.html — навигация
-- home.html — карточки товаров, truncatechars:100, пагинация
-- product_detail.html — детали товара, хлебные крошки
-- product_form.html — форма создания товара
-
-## Бонус
-
-- Форма добавления товара (ProductForm)
-- Пагинация по 6 товаров
-
-## Тестовые данные
-
-python manage.py seed_products
-
-Создаёт 100 товаров.
+📌 Страницы
+/ — Каталог товаров (главная)
+/product/<id>/ — Страница товара
+/product/create/ — Добавление товара
+/category/<id>/ — Товары по категории
+/contacts/ — Контакты
+/blog/ — Блог
