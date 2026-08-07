@@ -1,9 +1,12 @@
 ﻿from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db import models                                          # ← добавили импорт
+from django.db import models
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from catalog.models import Product
 from catalog.forms import ProductForm
+from catalog.services import get_products_by_category
 
 
 class ProductListView(ListView):
@@ -12,16 +15,16 @@ class ProductListView(ListView):
     context_object_name = 'page_obj'
     paginate_by = 6
 
-    def get_queryset(self):                                           # ← добавили метод
+    def get_queryset(self):
         queryset = super().get_queryset()
         if self.request.user.is_authenticated:
-            # Опубликованные товары + свои черновики
             return queryset.filter(
                 models.Q(is_published=True) | models.Q(owner=self.request.user)
             )
         return queryset.filter(is_published=True)
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class ProductDetailView(DetailView):
     model = Product
     template_name = 'catalog/product_detail.html'
@@ -47,7 +50,7 @@ class ProductUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         product = self.get_object()
         user = self.request.user
-        return user == product.owner or user.groups.filter(name='Модератор продуктов').exists()
+        return user == product.owner or user.has_perm('catalog.can_unpublish_product')
 
     def get_success_url(self):
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
@@ -61,8 +64,21 @@ class ProductDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         product = self.get_object()
         user = self.request.user
-        return user == product.owner or user.groups.filter(name='Модератор продуктов').exists()
+        return user == product.owner or user.has_perm('catalog.can_unpublish_product')
 
 
 class ContactsView(TemplateView):
     template_name = 'catalog/contacts.html'
+
+class ProductsByCategoryView(ListView):
+    """Отображает список продуктов в указанной категории.
+    Использует сервисную функцию get_products_by_category,
+    которая кеширует результат в Redis (ключ category_{id}, TTL 300 сек).
+    """
+    model = Product
+    template_name = 'catalog/products_by_category.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        category_id = self.kwargs.get('category_id')
+        return get_products_by_category(category_id)
